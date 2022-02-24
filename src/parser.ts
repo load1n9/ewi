@@ -3,10 +3,10 @@ import { FileThing } from "./file.ts";
 import { Midi } from "./midi.ts";
 
 export class Parser {
-  public file: Uint8Array;
-  public data: FileThing;
-  public midi: Midi | any;
-  public headerSize: number | undefined;
+  file: Uint8Array;
+  data: FileThing;
+  midi?: Midi;
+  headerSize: number | undefined;
   constructor(file: Uint8Array) {
     this.file = file; // ik but public in the contructor looks ugly
     this.data = new FileThing(
@@ -22,14 +22,14 @@ export class Parser {
     this.setMidi();
     this.readTrack();
   }
-  public isMidi() {
+  isMidi() {
     return this.data.readInt(4).toString(16) === "4d546864";
   }
-  public setMidi(): void {
+  setMidi(): void {
     this.headerSize = this.data.readInt(4);
-    let formatType = this.data.readInt(2);
-    let tracks = this.data.readInt(2);
-    let track: any = [];
+    const formatType = this.data.readInt(2);
+    const tracks = this.data.readInt(2);
+    const track: [] = [];
     const timeDivisionByte1 = this.data.readInt(1);
     const timeDivisionByte2 = this.data.readInt(1);
     let timeDivision: number | number[];
@@ -47,7 +47,8 @@ export class Parser {
       timeDivision,
     );
   }
-  public readTrack() {
+  readTrack() {
+    if (this.midi === undefined) return;
     for (let t = 1; t <= this.midi.tracks; t++) {
       this.midi.track[t - 1] = { event: [] };
       const headerValidation = this.data.readInt(4);
@@ -58,7 +59,7 @@ export class Parser {
       this.data.readInt(4);
       let e = 0;
       let endOfTrack = false;
-      let statusByte: any;
+      let statusByte: number | string[] = 0;
       let laststatusByte;
       while (!endOfTrack) {
         e++;
@@ -70,17 +71,17 @@ export class Parser {
         } else if (statusByte >= 128) {
           laststatusByte = statusByte;
         } else {
-          statusByte = laststatusByte;
+          statusByte = laststatusByte || 0;
           this.data.movePointer(-1);
         }
 
-        if (statusByte.toString(16) === "FF") {
+        if (statusByte?.toString(16) === "FF") {
           this.midi.track[t - 1].event[e - 1].type = "FF";
-          let hmm = this.data.readInt(1);
+          const hmm = this.data.readInt(1);
           this.midi.track[t - 1].event[e - 1].metaType = hmm === -1
             ? hmm
             : hmm.toString(16);
-          let metaEventLength = this.data.readIntVLV();
+          const metaEventLength = this.data.readIntVLV();
           switch (this.midi.track[t - 1].event[e - 1].metaType) {
             case "2F":
             case -1:
@@ -146,7 +147,7 @@ export class Parser {
               }
           }
         } else {
-          statusByte = statusByte.toString(16).split("");
+          statusByte = statusByte?.toString(16).split("");
           if (!statusByte[1]) statusByte.unshift("0");
           this.midi.track[t - 1].event[e - 1].type = parseInt(
             statusByte[0],
@@ -159,7 +160,7 @@ export class Parser {
           switch (this.midi.track[t - 1].event[e - 1].type) {
             case "F": {
               if (this.midi.track[t - 1].event[e - 1].data === false) {
-                let event_length = this.data.readIntVLV();
+                const event_length = this.data.readIntVLV();
                 this.midi.track[t - 1].event[e - 1].data = this.data.readInt(
                   event_length,
                 );
@@ -196,7 +197,7 @@ export class Parser {
       }
     }
   }
-  public print(): void {
+  print(): void {
     printFile(toHexString(this.file));
   }
 }
