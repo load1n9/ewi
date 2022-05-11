@@ -1,21 +1,21 @@
-export class FileThing {
+export class MIDIFile{
   #pointer = 0;
 
   constructor(
     public data: DataView,
   ) {}
-  
-  movePointer(_bytes: number) {
-    this.#pointer += _bytes;
+
+  movePointer(bytes: number) {
+    this.#pointer += bytes;
     return this.#pointer;
   }
-  readInt(_bytes: number) {
-    _bytes = Math.min(_bytes, this.data.byteLength - this.#pointer);
+  readInt(bytes: number) {
+    bytes = Math.min(bytes, this.data.byteLength - this.#pointer);
     let value = 0;
-    if (_bytes < 1) return -1;
-    if (_bytes > 1) {
-      for (let i = 1; i <= (_bytes - 1); i++) {
-        value += this.data.getUint8(this.#pointer) * Math.pow(256, _bytes - i);
+    if (bytes < 1) return -1;
+    if (bytes > 1) {
+      for (let i = 1; i <= (bytes - 1); i++) {
+        value += this.data.getUint8(this.#pointer) * Math.pow(256, bytes - i);
         this.#pointer++;
       }
     }
@@ -23,9 +23,9 @@ export class FileThing {
     this.#pointer++;
     return value;
   }
-  readStr(_bytes: number) {
+  readStr(bytes: number) {
     let text = "";
-    for (let char = 1; char <= _bytes; char++) {
+    for (let char = 1; char <= bytes; char++) {
       text += String.fromCharCode(this.readInt(1));
     }
     return text;

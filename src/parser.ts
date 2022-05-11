@@ -1,15 +1,15 @@
 import { printFile, toHexString } from "./../utils/mod.ts";
-import { FileThing } from "./file.ts";
+import { MIDIFile } from "./file.ts";
 import { Midi } from "./midi.ts";
 
 export class Parser {
   file: Uint8Array;
-  data: FileThing;
+  data: MIDIFile;
   midi?: Midi;
   headerSize: number | undefined;
   constructor(file: Uint8Array) {
-    this.file = file; // ik but public in the contructor looks ugly
-    this.data = new FileThing(
+    this.file = file;
+    this.data = new MIDIFile(
       new DataView(
         this.file.buffer,
         this.file.byteOffset,
@@ -189,7 +189,7 @@ export class Parser {
               break;
             default:
               if (this.midi.track[t - 1].event[e - 1].data === false) {
-                console.log("Unknown EVENT detected... reading cancelled!");
+                console.warn("Unknown EVENT detected... reading cancelled!");
                 return false;
               }
           }
